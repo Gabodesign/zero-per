@@ -10,11 +10,20 @@ import Player from "./Components/Player.jsx";
 // Importiamo il componente GameBoard.
 // Questo componente gestirà la griglia del gioco (tipo tris).
 import GameBoard from "./Components/GameBoard.jsx";
+import Log from './Components/Log.jsx';
 
+function deriveActivePlayer(gameTurns){
+  let currentPlayer = 'X';
+  if(gameTurns.length > 0 && gameTurns[0].player === 'X'){
+    currentPlayer = '0';
+  }
+
+  return currentPlayer;
+}
 // Definiamo il componente principale App.
 // In React, un componente è semplicemente una funzione che ritorna JSX.
 function App() {
-
+  const [gameTurns, setGameTurns] = useState([]);
   // Qui creiamo uno stato chiamato "activePlayer".
   // - 'X' è il valore iniziale
   // - activePlayer è il valore attuale dello stato
@@ -22,22 +31,23 @@ function App() {
   //
   // Importante: NON possiamo modificare activePlayer direttamente,
   // dobbiamo sempre usare SetActivePlayer.
-  const [activePlayer, SetActivePlayer] = useState('X');
+  const activePlayer = deriveActivePlayer(gameTurns);
   
   // Questa funzione verrà chiamata quando un giocatore seleziona una casella.
-  function handleSelectSquare() {
-
+  function handleSelectSquare(rowIndex, colIndex) {
+    
     // Qui usiamo la forma "funzionale" di setState.
     // React ci passa automaticamente il valore attuale dello stato
     // (curActivePlayer).
     //
     // Questo approccio è consigliato quando il nuovo stato
     // dipende dal valore precedente.
-    SetActivePlayer((curActivePlayer) =>
-      // Se il giocatore attivo è 'X', passiamo a 'O'
-      // altrimenti torniamo a 'X'
-      curActivePlayer === 'X' ? 'O' : 'X'
-    );
+    
+    setGameTurns(prevTurns => {
+      const currentPlayer = deriveActivePlayer(prevTurns);
+      const updatedTurns = [{square: {row: rowIndex, col: colIndex}, player: currentPlayer}, ...prevTurns,];
+      return updatedTurns;
+    });
   }
   
   // Il return di un componente React descrive cosa deve essere mostrato a schermo.
@@ -82,12 +92,12 @@ function App() {
         */}
         <GameBoard
           onSelectSquare={handleSelectSquare}
-          activePlayerSymbol={activePlayer}
+          turns={gameTurns}
         />
       </div>
 
       {/* Placeholder per eventuali log di gioco */}
-      LOG
+      <Log turns={gameTurns}/>
     </main>
   )
 }

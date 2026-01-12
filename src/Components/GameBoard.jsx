@@ -1,6 +1,4 @@
-// Importiamo useState da React.
-// Serve per gestire lo stato locale del tabellone di gioco.
-import { useState } from "react";
+
 
 // Definiamo lo stato iniziale del tabellone.
 // È una matrice 3x3 inizializzata a null.
@@ -15,11 +13,17 @@ const initialGameBoard = [
 // Riceve due props dal componente padre (App):
 // - onSelectSquare: funzione da chiamare quando si clicca una casella
 // - activePlayerSymbol: simbolo del giocatore corrente ('X' o 'O')
-export default function GameBoard({ onSelectSquare, activePlayerSymbol }) {
-
+export default function GameBoard({ onSelectSquare, turns }) {
+    let gameBoard = initialGameBoard;
+   
+    for(const turn of turns){
+        const {square, player} = turn;
+        const {row, col} = square;
+        gameBoard[row][col] = player; 
+    }
     // Stato che rappresenta il tabellone attuale del gioco.
     // È una copia dello stato iniziale.
-    const [gameBoard, setGameBoard] = useState(initialGameBoard);
+    /*const [gameBoard, setGameBoard] = useState(initialGameBoard);
 
     // Questa funzione viene chiamata quando l'utente clicca su una casella.
     // rowIndex e colIndex indicano la posizione nella griglia.
@@ -53,7 +57,7 @@ export default function GameBoard({ onSelectSquare, activePlayerSymbol }) {
         // che una mossa è stata fatta.
         onSelectSquare();
     }
-
+    */
     // Render del tabellone
     return (
         // Lista esterna che rappresenta le righe
@@ -77,16 +81,14 @@ export default function GameBoard({ onSelectSquare, activePlayerSymbol }) {
                         */}
                         {row.map((playerSymbol, colIndex) => (
                             <li key={colIndex}>
-
                                 {/* 
                                   Ogni cella è un bottone cliccabile.
                                   Passiamo rowIndex e colIndex usando
                                   una arrow function.
                                 */}
                                 <button
-                                    onClick={() =>
-                                        handleSelectSquare(rowIndex, colIndex)
-                                    }
+                                    onClick={() => onSelectSquare(rowIndex, colIndex)}
+                                    disabled={playerSymbol !== null}
                                 >
                                     {/* Mostriamo il simbolo del giocatore */}
                                     {playerSymbol}
