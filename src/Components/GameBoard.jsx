@@ -1,26 +1,10 @@
 
-
-// Definiamo lo stato iniziale del tabellone.
-// È una matrice 3x3 inizializzata a null.
-// null = casella vuota
-const initialGameBoard = [
-    [null, null, null],
-    [null, null, null],
-    [null, null, null]
-];
-
 // Componente GameBoard.
 // Riceve due props dal componente padre (App):
 // - onSelectSquare: funzione da chiamare quando si clicca una casella
 // - activePlayerSymbol: simbolo del giocatore corrente ('X' o 'O')
-export default function GameBoard({ onSelectSquare, turns }) {
-    let gameBoard = initialGameBoard;
-   
-    for(const turn of turns){
-        const {square, player} = turn;
-        const {row, col} = square;
-        gameBoard[row][col] = player; 
-    }
+export default function GameBoard({ onSelectSquare, board }) {
+    
     // Stato che rappresenta il tabellone attuale del gioco.
     // È una copia dello stato iniziale.
     /*const [gameBoard, setGameBoard] = useState(initialGameBoard);
@@ -68,7 +52,7 @@ export default function GameBoard({ onSelectSquare, turns }) {
               - row è una riga (array)
               - rowIndex è l'indice della riga
             */}
-            {gameBoard.map((row, rowIndex) => (
+            {board.map((row, rowIndex) => (
                 <li key={rowIndex}>
 
                     {/* Lista interna per le colonne */}
