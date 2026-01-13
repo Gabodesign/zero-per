@@ -1,91 +1,96 @@
-// Importiamo useState da React.
-// useState serve per gestire dati che cambiano nel tempo all'interno
-// di un componente (stato locale).
+// Importiamo useState: hook di React che ci permette di salvare e aggiornare stato locale nel componente.
+// Quando lo stato cambia, React riesegue il render del componente per aggiornare l’interfaccia.
 import { useState } from "react";
 
-// Esportiamo direttamente la funzione Player come default export.
-// Player è un componente React che rappresenta un giocatore.
-export default function Player({ initialName, symbol, isActive }) {
+// Esportiamo il componente come default: chi importa questo file può scegliere il nome con cui importarlo.
+// Questo componente rappresenta “la riga” di un giocatore (nome, simbolo, bottone Edit/Save).
+export default function Player({ initialName, symbol, isActive, onChangeName }) {
+  // Stato: nome del giocatore mostrato a schermo.
+  // Lo inizializziamo con la prop initialName perché all’inizio arriva dal padre (App),
+  // ma poi vogliamo poterlo cambiare localmente mentre l’utente scrive.
+  const [playerName, setPlayername] = useState(initialName);
 
-    // Stato che contiene il nome del giocatore.
-    // initialName arriva come prop dal componente padre (App).
-    // Lo copiamo nello stato perché vogliamo poterlo MODIFICARE.
-    const [playerName, setPlayername] = useState(initialName);
+  // Stato: flag che controlla la UI “view mode” vs “edit mode”.
+  // false => mostro testo; true => mostro input.
+  const [isEditing, setIsEditing] = useState(false);
 
-    // Stato che indica se siamo in modalità "editing" o no.
-    // false = stiamo solo visualizzando il nome
-    // true  = stiamo modificando il nome
-    const [isEditing, setIsEditing] = useState(false);
+  // Handler del click sul bottone: alterna tra modalità Edit e Save.
+  function handleEditClick() {
+    // Aggiorniamo isEditing con la forma funzionale: React ci passa il valore precedente.
+    // Questo evita bug quando più aggiornamenti avvengono vicini (stato non ancora “committato”).
+    setIsEditing((editing) => !editing);
 
-    // Questa funzione viene chiamata quando clicchiamo il bottone Edit/Save.
-    function handleEditClick() {
-
-        // Qui usiamo di nuovo la forma funzionale di setState.
-        // "editing" è il valore attuale di isEditing.
-        // Lo invertiamo: true diventa false, false diventa true.
-        setIsEditing((editing) => !editing);
-    }  
-
-    // Questa funzione viene chiamata ogni volta che l'input cambia valore.
-    function handleChange(event) {
-
-        // event è l'evento del browser (SyntheticEvent di React).
-        // Contiene TUTTE le info sull'interazione dell'utente.
-        console.log(event);
-
-        // event.target è l'input
-        // event.target.value è il testo digitato dall'utente
-        // Aggiorniamo lo stato con il nuovo nome
-        setPlayername(event.target.value);
-    }
-
-    // Qui iniziamo con una variabile che conterrà JSX.
-    // Di default mostriamo solo il nome del giocatore come testo.
-    let editPlayerName = (
-        <span className="player-name">{playerName}</span>
-    );
-
-    // Se siamo in modalità editing...
+    // Se prima del click eravamo in editing, allora il bottone rappresenta “Save”.
+    // Quindi notifichiamo il componente padre (App) del nuovo nome.
+    //
+    // Nota importante: isEditing qui è il valore “vecchio” (prima del setIsEditing),
+    // ed è esattamente ciò che vogliamo per capire se stiamo salvando.
     if (isEditing) {
-
-        // ...sostituiamo lo span con un input di testo.
-        // defaultValue viene usato per inizializzare il valore dell'input.
-        // onChange ascolta ogni modifica dell'utente.
-        editPlayerName = (
-            <input
-                type="text"
-                required
-                defaultValue={playerName}
-                onChange={handleChange}
-            />
-        );
+      // onChangeName è una callback passata dal padre: così il padre può aggiornare lo stato globale dei nomi.
+      // Passiamo:
+      // - symbol ('X' o 'O') per sapere quale giocatore stiamo modificando
+      // - playerName che è il valore corrente in stato
+      onChangeName(symbol, playerName);
     }
+  }
 
-    // JSX che definisce l'output del componente
-    return (
-        // <li> rappresenta un giocatore nella lista.
-        // Se isActive è true, aggiungiamo la classe 'active'
-        // altrimenti non aggiungiamo nessuna classe.
-        <li className={isActive ? 'active' : undefined}>
+  // Handler dell’input: viene chiamato ad ogni digitazione (evento onChange).
+  function handleChange(event) {
+    // event è un SyntheticEvent di React: wrapper cross-browser dell’evento del DOM.
+    // Stampiamo in console solo per debug (in produzione lo rimuoverei).
+    console.log(event);
 
-            {/* Contenitore del nome e del simbolo */}
-            <span className="player">
+    // Aggiorniamo lo stato con il valore digitato nell’input.
+    // event.target è l’input, event.target.value è la stringa corrente.
+    setPlayername(event.target.value);
+  }
 
-              {/* Qui React renderizza o lo span o l'input */}
-              {editPlayerName}
+  // Prepariamo un “pezzo di UI” in una variabile: ci serve per renderizzare in modo condizionale
+  // (testo quando non editiamo, input quando editiamo) senza duplicare troppo JSX nel return.
+  let editPlayerName = (
+    // In modalità non-edit mostriamo il nome come semplice testo.
+    <span className="player-name">{playerName}</span>
+  );
 
-              {/* Simbolo del giocatore (X o O) */}
-              <span className="player-symbol">{symbol}</span>
-            </span>
-
-            {/* 
-              Bottone che cambia comportamento in base allo stato:
-              - se isEditing è true → mostra "Save"
-              - se isEditing è false → mostra "Edit"
-            */}
-            <button onClick={handleEditClick}>
-                {isEditing ? 'Save' : 'Edit'}
-            </button>
-        </li>
+  // Se siamo in modalità editing, sostituiamo lo span con un input.
+  if (isEditing) {
+    editPlayerName = (
+      <input
+        // Input di testo per modificare il nome.
+        type="text"
+        // required: il browser considera il campo obbligatorio (utile in form),
+        // ma qui non stiamo usando un submit, quindi ha effetto limitato.
+        required
+        // defaultValue rende l’input “uncontrolled” (gestito dal DOM) con valore iniziale.
+        // Noi comunque ascoltiamo onChange e aggiorniamo lo stato.
+        // Alternativa più “React style”: usare value={playerName} (controlled input).
+        defaultValue={playerName}
+        // onChange viene chiamato ad ogni modifica (digitazione, incolla, ecc.).
+        onChange={handleChange}
+      />
     );
+  }
+
+  // Return JSX: descrive esattamente cosa React deve mostrare.
+  return (
+    // Ogni Player è un <li> dentro una lista <ol>.
+    // className condizionale: se il giocatore è attivo aggiungiamo 'active', altrimenti niente.
+    // undefined è un modo pulito per “non mettere” la classe.
+    <li className={isActive ? "active" : undefined}>
+      {/* Contenitore che raggruppa nome + simbolo (utile per layout/CSS). */}
+      <span className="player">
+        {/* Qui React inserisce o <span> o <input> in base a isEditing. */}
+        {editPlayerName}
+
+        {/* Simbolo fisso del giocatore (X o O). */}
+        <span className="player-symbol">{symbol}</span>
+      </span>
+
+      {/* Bottone: in base a isEditing cambia etichetta e significato (Edit vs Save). */}
+      <button onClick={handleEditClick}>
+        {/* Se stiamo editando, il click equivale a salvare; altrimenti equivale a entrare in edit. */}
+        {isEditing ? "Save" : "Edit"}
+      </button>
+    </li>
+  );
 }
